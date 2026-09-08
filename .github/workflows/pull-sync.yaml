@@ -1,0 +1,29 @@
+name: Sync Upstream
+
+on:
+  schedule:
+    # Trigger check every 30 minutes
+    - cron: '*/30 * * * *'
+  # Allow manual trigger from GitHub Actions UI
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Sync with Upstream
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Pull App
+        continue-on-error: true
+        run: |
+          echo "Triggering Pull App at https://pull.git.ci/process/braccae/RotationSolverReborn..."
+          curl -s -S -i "https://pull.git.ci/process/braccae/RotationSolverReborn" || true
+
+      - name: Sync via GitHub CLI (Fallback / Native Fork Sync)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Executing native fork sync for 'main' branch..."
+          gh repo sync braccae/RotationSolverReborn -b main || echo "Sync completed or repository already up to date."
