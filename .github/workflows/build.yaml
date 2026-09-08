@@ -3,6 +3,10 @@ on:
   pull_request:
     branches:
       - main
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   Build:
     runs-on: windows-latest
@@ -27,3 +31,17 @@ jobs:
 
       - name: Build Plugin
         run: dotnet build --no-restore -c Release RotationSolver/RotationSolver.csproj
+
+  AutoMerge:
+    name: Auto Merge Upstream PR
+    needs: Build
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'pull[bot]' || contains(github.event.pull_request.labels.*.name, 'pull')
+    steps:
+      - name: Merge Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr review ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --approve || true
+          gh pr merge ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --rebase
+
